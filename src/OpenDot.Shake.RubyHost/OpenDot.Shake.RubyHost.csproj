@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>OpenDot.Shake.RubyHost</AssemblyName>
+    <RootNamespace>OpenDot.Shake.RubyHost</RootNamespace>
+    <UseAppHost>true</UseAppHost>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenDot.Shake.RubyBridge\OpenDot.Shake.RubyBridge.vcxproj" ReferenceOutputAssembly="false">
+      <SetPlatform>Platform=x64</SetPlatform>
+    </ProjectReference>
+    <Reference Include="OpenDot.Shake.RubyBridge">
+      <HintPath>..\OpenDot.Shake.RubyBridge\bin\$(Configuration)\$(TargetFramework)\OpenDot.Shake.RubyBridge.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <EmbeddedResource Include="Resources\RubyBootstrap.rb" />
+  </ItemGroup>
+</Project>

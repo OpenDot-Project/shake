@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenDot.Shake.Cli", "src\OpenDot.Shake.Cli\OpenDot.Shake.Cli.csproj", "{0A1D8C20-FF95-4677-9C04-2D9F0F8FB030}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenDot.Shake.RubyHost", "src\OpenDot.Shake.RubyHost\OpenDot.Shake.RubyHost.csproj", "{E1B8813A-2B51-4A7B-A9BA-3C9E17D974DA}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "OpenDot.Shake.RubyBridge", "src\OpenDot.Shake.RubyBridge\OpenDot.Shake.RubyBridge.vcxproj", "{0C44C5FC-98CF-4E61-A267-D5C7C5A8585B}"
+EndProject
+Global
+  GlobalSection(SolutionConfigurationPlatforms) = preSolution
+    Debug|x64 = Debug|x64
+    Release|x64 = Release|x64
+  EndGlobalSection
+  GlobalSection(ProjectConfigurationPlatforms) = postSolution
+    {0A1D8C20-FF95-4677-9C04-2D9F0F8FB030}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {0A1D8C20-FF95-4677-9C04-2D9F0F8FB030}.Debug|x64.Build.0 = Debug|Any CPU
+    {0A1D8C20-FF95-4677-9C04-2D9F0F8FB030}.Release|x64.ActiveCfg = Release|Any CPU
+    {0A1D8C20-FF95-4677-9C04-2D9F0F8FB030}.Release|x64.Build.0 = Release|Any CPU
+    {E1B8813A-2B51-4A7B-A9BA-3C9E17D974DA}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {E1B8813A-2B51-4A7B-A9BA-3C9E17D974DA}.Debug|x64.Build.0 = Debug|Any CPU
+    {E1B8813A-2B51-4A7B-A9BA-3C9E17D974DA}.Release|x64.ActiveCfg = Release|Any CPU
+    {E1B8813A-2B51-4A7B-A9BA-3C9E17D974DA}.Release|x64.Build.0 = Release|Any CPU
+    {0C44C5FC-98CF-4E61-A267-D5C7C5A8585B}.Debug|x64.ActiveCfg = Debug|x64
+    {0C44C5FC-98CF-4E61-A267-D5C7C5A8585B}.Debug|x64.Build.0 = Debug|x64
+    {0C44C5FC-98CF-4E61-A267-D5C7C5A8585B}.Release|x64.ActiveCfg = Release|x64
+    {0C44C5FC-98CF-4E61-A267-D5C7C5A8585B}.Release|x64.Build.0 = Release|x64
+  EndGlobalSection
+  GlobalSection(SolutionProperties) = preSolution
+    HideSolutionNode = FALSE
+  EndGlobalSection
+EndGlobal

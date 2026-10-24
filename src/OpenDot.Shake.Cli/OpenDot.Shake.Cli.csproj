@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>OpenDot.Shake.Cli</AssemblyName>
+    <RootNamespace>OpenDot.Shake.Cli</RootNamespace>
+    <Version>0.0.1-dev</Version>
+    <UseAppHost>true</UseAppHost>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" />
+    <ProjectReference Include="..\OpenDot.Shake.RubyHost\OpenDot.Shake.RubyHost.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyRubyHostPayload" AfterTargets="Build">
+    <PropertyGroup>
+      <RubyHostOutput>$(MSBuildThisFileDirectory)..\OpenDot.Shake.RubyHost\bin\$(Configuration)\$(TargetFramework)\</RubyHostOutput>
+      <RubyHostOutput Condition="'$(Platform)' != 'AnyCPU'">$(MSBuildThisFileDirectory)..\OpenDot.Shake.RubyHost\bin\$(Platform)\$(Configuration)\$(TargetFramework)\</RubyHostOutput>
+    </PropertyGroup>
+    <ItemGroup>
+      <RubyHostPayload Include="$(RubyHostOutput)**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RubyHostPayload)"
+          DestinationFiles="@(RubyHostPayload->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
