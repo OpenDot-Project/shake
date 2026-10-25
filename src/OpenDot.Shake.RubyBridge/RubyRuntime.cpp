@@ -221,12 +221,19 @@ String ^ RubyRuntime::Evaluate(String ^ runtimeHome, String ^ source)
             }
         }
 
-        // RubyInstaller places its UCRT support DLLs below this directory.
+        // RubyInstaller places its runtime and MSYS support DLLs below this directory.
         auto mingwBin = Path::Combine(Path::Combine(Path::Combine(runtimeRoot, "msys64"), "ucrt64"), "bin");
         std::unique_ptr<DllDirectory> mingwDependencies;
         if (Directory::Exists(mingwBin))
         {
             mingwDependencies = std::make_unique<DllDirectory>(msclr::interop::marshal_as<std::wstring>(mingwBin));
+        }
+
+        auto msysBin = Path::Combine(Path::Combine(runtimeRoot, "msys64"), "usr/bin");
+        std::unique_ptr<DllDirectory> msysDependencies;
+        if (Directory::Exists(msysBin))
+        {
+            msysDependencies = std::make_unique<DllDirectory>(msclr::interop::marshal_as<std::wstring>(msysBin));
         }
 
         DynamicLibrary ruby(libraryPath);

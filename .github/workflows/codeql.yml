@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze C# and C++/CLI
+    name: Analyze C#
     runs-on: windows-2025
     timeout-minutes: 45
 
@@ -45,7 +45,8 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
-          languages: csharp, c-cpp
+          # CodeQL's C++ extractor currently rejects this /clr-only bridge as having no C++ source.
+          languages: csharp
           build-mode: manual
 
       - name: Locate Visual Studio MSBuild
