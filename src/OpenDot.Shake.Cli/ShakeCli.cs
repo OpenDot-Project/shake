@@ -163,8 +163,10 @@ internal static class ShakeCli
             return 2;
         }
 
-        var graph = GraphJson.Parse(response.Payload ??
-                                    throw new InvalidDataException("RubyHost returned no graph payload."));
+        var graph = GraphValidator.Validate(
+            GraphJson.Parse(response.Payload ??
+                            throw new InvalidDataException("RubyHost returned no graph payload.")),
+            workspace.Root);
         var rendered = GraphRenderer.Render(graph, invocation.Target!, invocation.GraphFormat);
         Console.Out.Write(rendered);
         if (!rendered.EndsWith(Environment.NewLine, StringComparison.Ordinal)) Console.Out.WriteLine();
