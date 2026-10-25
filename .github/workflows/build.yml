@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2026 OpenDot Project <opendotproject.opendot@gmail.com>
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Windows build and validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-build:
+    name: Release build, CppCoreCheck, and graph smoke
+    runs-on: windows-2025
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            src/OpenDot.Shake.Cli/packages.lock.json
+            src/OpenDot.Shake.RubyHost/packages.lock.json
+
+      - name: Locate Visual Studio MSBuild
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'vswhere.exe was not found.' }
+
+          $installationPath = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ([string]::IsNullOrWhiteSpace($installationPath)) { throw 'Visual Studio with MSBuild and x64 C++ tools was not found.' }
+
+          $msbuild = Join-Path $installationPath 'MSBuild\Current\Bin\amd64\MSBuild.exe'
+          if (-not (Test-Path -LiteralPath $msbuild)) { throw "MSBuild.exe was not found at $msbuild" }
+          "MSBUILD_EXE=$msbuild" | Add-Content -LiteralPath $env:GITHUB_ENV
+
+      - name: Restore locked NuGet dependencies
+        shell: pwsh
+        run: '& $env:MSBUILD_EXE OpenDot.Shake.sln /t:Restore /p:Configuration=Release /p:Platform=x64 /p:RestoreLockedMode=true /v:minimal'
+
+      - name: Run MSVC CppCoreCheck
+        shell: pwsh
+        run: '& $env:MSBUILD_EXE src/OpenDot.Shake.RubyBridge/OpenDot.Shake.RubyBridge.vcxproj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:EnableCppCoreCheck=true /p:RunCodeAnalysis=true /p:CodeAnalysisRuleSet=CppCoreCheckRules.ruleset /v:minimal'
+
+      - name: Build the solution
+        shell: pwsh
+        run: '& $env:MSBUILD_EXE OpenDot.Shake.sln /t:Build /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=false /p:EnableCppCoreCheck=false /p:WarningsAsErrors=true /v:minimal'
+
+      - name: Check CRuby bootstrap syntax
+        shell: pwsh
+        run: ruby -c src/OpenDot.Shake.RubyHost/Resources/RubyBootstrap.rb
+
+      - name: Exercise target graph validation
+        shell: pwsh
+        run: ./scripts/Test-GraphValidation.ps1 -Configuration Release

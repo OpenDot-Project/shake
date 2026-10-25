@@ -37,6 +37,7 @@ module Shake
         "visibility" => ["private"],
         "options" => {}
       }
+      APPEND_FIELDS.each { |field| @data[field.to_s] ||= [] }
     end
 
     APPEND_FIELDS.each do |field|
@@ -148,14 +149,10 @@ module Shake
 
     def close
       @open = false
-      @data["sources"].uniq!
-      @data["dependencies"].uniq!
-      @data["headers"]&.uniq!
-      @data["include_directories"]&.uniq!
-      @data["defines"]&.uniq!
-      @data["arguments"]&.uniq!
-      @data["outputs"]&.uniq!
-      @data["tools"]&.uniq!
+      APPEND_FIELDS.each do |field|
+        values = (@data[field.to_s] ||= [])
+        values.uniq!
+      end
       symbolize_to_json(@data)
     end
 
@@ -271,10 +268,14 @@ module Shake
     end
 
     def default_targets(*labels)
+      raise DslError, "default_targets may be declared only in the root BUILD.rb" unless @package == "."
       raise DslError, "default_targets may be declared only once" unless @default_targets.nil?
       values = labels.flat_map { |item| item.is_a?(Array) ? item : [item] }
-      normalized = values.map { |item| item.is_a?(TargetRef) ? item.label : item }
-      raise DslError, "default_targets values must be Strings or TargetRef values" unless normalized.all? { |item| item.is_a?(String) }
+      normalized = values.map do |item|
+        label = item.is_a?(TargetRef) ? item.label : item
+        raise DslError, "default_targets values must be Strings or TargetRef values" unless label.is_a?(String)
+        normalize_label(label)
+      end
       @default_targets = normalized
       nil
     end
@@ -301,6 +302,17 @@ module Shake
     end
 
     private
+
+    def normalize_label(label)
+      return label if label.start_with?("//")
+
+      if label.start_with?(":")
+        package = @package == "." ? "" : @package
+        return "#{package.empty? ? '//' : "//#{package}"}#{label}"
+      end
+
+      raise DslError, "target labels must be fully qualified or package-relative with a leading colon"
+    end
 
     def declare_target(rule, name, &block)
       raise DslError, "#{rule} target name must be a lowercase identifier" unless name.is_a?(String) && name.match?(/\A[a-z][a-z0-9_]*\z/)
