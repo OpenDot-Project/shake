@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 OpenDot Project <opendotproject.opendot@gmail.com>
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze C# and C++/CLI
+    runs-on: windows-2025
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            src/OpenDot.Shake.Cli/packages.lock.json
+            src/OpenDot.Shake.RubyHost/packages.lock.json
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: csharp, c-cpp
+          build-mode: manual
+
+      - name: Locate Visual Studio MSBuild
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'vswhere.exe was not found.' }
+
+          $installationPath = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ([string]::IsNullOrWhiteSpace($installationPath)) { throw 'Visual Studio with MSBuild and x64 C++ tools was not found.' }
+
+          $msbuild = Join-Path $installationPath 'MSBuild\Current\Bin\amd64\MSBuild.exe'
+          if (-not (Test-Path -LiteralPath $msbuild)) { throw "MSBuild.exe was not found at $msbuild" }
+          "MSBUILD_EXE=$msbuild" | Add-Content -LiteralPath $env:GITHUB_ENV
+
+      - name: Restore locked NuGet dependencies
+        shell: pwsh
+        run: '& $env:MSBUILD_EXE OpenDot.Shake.sln /t:Restore /p:Configuration=Release /p:Platform=x64 /p:RestoreLockedMode=true /v:minimal'
+
+      - name: Build for CodeQL extraction
+        shell: pwsh
+        run: '& $env:MSBUILD_EXE OpenDot.Shake.sln /t:Build /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=false /p:EnableCppCoreCheck=false /p:WarningsAsErrors=true /v:minimal'
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
