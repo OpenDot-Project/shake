@@ -33,6 +33,12 @@ internal sealed record GraphTarget(
     string Label,
     string[] Sources,
     string[] Dependencies,
+    string[] Headers,
+    string[] IncludeDirectories,
+    string[] Defines,
+    string[] Arguments,
+    string[] Outputs,
+    string[] Tools,
     string[] Visibility,
     Dictionary<string, JsonElement> Options);
 

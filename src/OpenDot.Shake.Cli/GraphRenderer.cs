@@ -22,14 +22,12 @@ internal static class GraphRenderer
         while (pending.TryPop(out var label))
         {
             if (!targetsByLabel.TryGetValue(label, out var target) || !selected.TryAdd(label, target)) continue;
-            foreach (var dependency in target.Dependencies)
+            foreach (var dependency in target.Dependencies.Concat(target.Tools))
             {
                 var dependencyLabel = NormalizeLabel(dependency, target.Label);
                 if (!targetsByLabel.ContainsKey(dependencyLabel))
-                {
                     throw new CommandLineException(
                         $"target {target.Label} depends on unresolved target {dependencyLabel}; external dependency resolution is not implemented yet.");
-                }
 
                 pending.Push(dependencyLabel);
             }
@@ -81,6 +79,16 @@ internal static class GraphRenderer
             if (included.Contains(label))
                 output.Append("  ").Append(quote).Append(Escape(label)).Append(quote)
                     .Append(" -> ").Append(quote).Append(Escape(target.Label)).Append(quote).AppendLine(";");
+        }
+
+        foreach (var target in targets)
+        foreach (var tool in target.Tools)
+        {
+            var label = NormalizeLabel(tool, target.Label);
+            if (included.Contains(label))
+                output.Append("  ").Append(quote).Append(Escape(label)).Append(quote)
+                    .Append(" -> ").Append(quote).Append(Escape(target.Label)).Append(quote)
+                    .AppendLine(" [style=dashed];");
         }
 
         output.AppendLine("}");
